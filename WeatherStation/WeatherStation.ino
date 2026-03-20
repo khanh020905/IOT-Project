@@ -29,11 +29,14 @@ unsigned long lastTipCount = 0;
 
 float rainHour = 0;
 float rainDay  = 0;
+float rainRate = 0; // Live rain intensity (mm) - decays over time
 
 int currentHour = -1;
 int currentDay  = -1;
 
 bool initSensor = true;
+unsigned long lastTipTime = 0;
+unsigned long lastDecayTime = 0;
 
 // ====== VIRTUAL PINS MAP ======
 // V0 - Temperature (°C)
@@ -41,6 +44,7 @@ bool initSensor = true;
 // V2 - Rain per Hour (mm)
 // V3 - Manual Reset Button
 // V4 - Rain per Day (mm)
+// V5 - Live Decaying Rain (mm)
 
 // ====== MANUAL RESET BUTTON (V3) ======
 BLYNK_WRITE(V3) {
@@ -49,8 +53,10 @@ BLYNK_WRITE(V3) {
     rainDay  = 0;
     tipCount = 0;
     lastTipCount = 0;
+    rainRate = 0;
     Blynk.virtualWrite(V2, rainHour);
     Blynk.virtualWrite(V4, rainDay);
+    Blynk.virtualWrite(V5, rainRate);
     Serial.println("[RESET] Manual Reset Done");
   }
 }
@@ -80,14 +86,21 @@ void sendTempHumidity() {
   }
 }
 
-// ====== READ TIPPING BUCKET (POLLING, NO INTERRUPT) ======
+// ====== READ TIPPING BUCKET (POLLING) ======
 int lastRainState = HIGH;
 
 void readRainSensor() {
   int currentState = digitalRead(RAIN_PIN);
 
   // Detect falling edge
-  if (lastRainState != currentState) {
+  if (lastRainState == HIGH && currentState == LOW) {
+    unsigned long currentTime = millis();
+    
+    // Increment live rain
+    rainRate += RAIN_PER_TIP;
+    if (rainRate > 10.0) rainRate = 10.0; // Cap to prevent excessive values
+
+    lastTipTime = currentTime;
     tipCount++;
     float rainAmount = RAIN_PER_TIP;
 
@@ -96,15 +109,33 @@ void readRainSensor() {
 
     Blynk.virtualWrite(V2, rainHour);
     Blynk.virtualWrite(V4, rainDay);
+    Blynk.virtualWrite(V5, rainRate);
 
-    Serial.print("[RAIN] Hour: ");
-    Serial.print(rainHour, 1);
-    Serial.print(" mm  |  Day: ");
-    Serial.print(rainDay, 1);
+    Serial.print("[RAIN] Tip Event! Live: ");
+    Serial.print(rainRate, 1);
     Serial.println(" mm");
 
-    lastRainState = currentState;
+    lastRainState = LOW;
     delay(200);  // debounce
+  } else if (currentState == HIGH) {
+    lastRainState = HIGH;
+  }
+}
+
+// ====== GRADUAL DECAY LOGIC (LEAKY BUCKET) ======
+void checkRainDecay() {
+  // Only start decaying if 4.5 seconds have passed since the last tip
+  if (rainRate > 0 && (millis() - lastTipTime > 4500)) {
+    if (millis() - lastDecayTime >= 500) {
+      lastDecayTime = millis();
+      
+      // Decay rate: -0.2 mm per 0.5s (0.4 mm/s)
+      rainRate -= 0.2;
+      if (rainRate < 0) rainRate = 0;
+      
+      // Update Blynk
+      Blynk.virtualWrite(V5, rainRate);
+    }
   }
 }
 
@@ -143,7 +174,6 @@ void setup() {
   if (aht20.begin() == false) {
     Serial.println("[ERROR] AHT20 not detected! Check wiring.");
     initSensor = false;
-    // Don't freeze - still allow Blynk connection
   } else {
     Serial.println("[OK] AHT20 sensor initialized");
   }
@@ -166,5 +196,6 @@ void loop() {
   }
 
   readRainSensor();
+  checkRainDecay();
   checkTimeEvent();
 }

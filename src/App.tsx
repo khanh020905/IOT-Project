@@ -14,15 +14,14 @@ function App() {
   // Helper function to pick the appropriate video background based on weather
   const getBackgroundVideo = () => {
     if (!data) return "video/Stormy_Sky_Video_Generation.mp4"; // Default fallback
-    const { temperature, humidity, rainHour } = data;
+    const { temperature, humidity, rainRate } = data;
 
-    if (rainHour > 5) return "video/Melancholic_Rain_Video_Generation.mp4";
-    if (rainHour > 1) return "video/Melancholic_Rain_Video_Generation.mp4";
-    if (rainHour > 0) return "video/Overcast_Sky_Time_Lapse_Video.mp4";
+    if (rainRate > 5) return "video/Melancholic_Rain_Video_Generation.mp4";
+    if (rainRate > 1) return "video/Melancholic_Rain_Video_Generation.mp4";
+    if (rainRate > 0) return "video/Overcast_Sky_Time_Lapse_Video.mp4";
     if (humidity > 85) return "video/Overcast_Sky_Time_Lapse_Video.mp4";
-    if (temperature > 35) return "video/Sunny_Sky_Video_Generation.mp4";
     if (temperature > 30) return "video/Sunny_Sky_Video_Generation.mp4";
-    if (temperature > 25) return "video/Sunny_Sky_Video_Generation.mp4";
+    if (temperature > 18) return "video/Sunny_Sky_Video_Generation.mp4";
 
     return "video/Stormy_Sky_Video_Generation.mp4"; // Fallback/pleasant
   };
@@ -110,7 +109,7 @@ function App() {
                     <HeroWeather
                       temperature={data.temperature}
                       humidity={data.humidity}
-                      rainHour={data.rainHour}
+                      rainRate={data.rainRate}
                     />
                   </div>
 
@@ -118,7 +117,11 @@ function App() {
                   <div className="flex flex-col gap-6 mt-12 lg:mt-0 lg:w-[380px] shrink-0 xl:mr-16 relative z-20">
                     {/* Replaced 'Wind Status' with Rain Status sparkline */}
                     <div className="w-full">
-                      <RainCard rainHour={data.rainHour} history={history} />
+                      <RainCard
+                        rainHour={data.rainHour}
+                        rainRate={data.rainRate}
+                        history={history}
+                      />
                     </div>
 
                     {/* Replaced 'Sunrise' with Humidity Dial */}

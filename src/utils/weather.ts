@@ -77,35 +77,36 @@ export function getComfortEmoji(level: ComfortLevel): string {
 export function getWeatherCondition(
   tempC: number,
   humidity: number,
-  rainHour: number,
+  rainfall: number,
 ): string {
-  if (rainHour > 5) return "Mưa lớn";
-  if (rainHour > 1) return "Mưa vừa";
-  if (rainHour > 0) return "Mưa nhỏ";
+  if (rainfall > 5) return "Mưa lớn";
+  if (rainfall > 1) return "Mưa vừa";
+  if (rainfall > 0.15) return "Mưa nhỏ";
   if (humidity > 85) return "Có sương mù";
   if (humidity > 70 && tempC > 30) return "Nóng ẩm";
   if (tempC > 35) return "Rất nóng";
   if (tempC > 30) return "Nắng ấm";
-  if (tempC > 25) return "Ít mây";
-  if (tempC > 18) return "Thời tiết đẹp";
-  return "Trời mát & Trong xanh";
+  if (tempC > 22) return "Trời có mây nắng";
+  if (tempC > 18) return "Thời tiết dịu mát";
+  return "Trời se lạnh & Trong xanh";
 }
 
 export function getWeatherDescription(
   tempC: number,
   humidity: number,
-  rainHour: number,
+  rainfall: number,
 ): string {
-  if (rainHour > 5) return "Phát hiện lượng mưa lớn. Hạn chế ra ngoài.";
-  if (rainHour > 1) return "Mưa rào nhẹ. Hãy mang theo ô khi ra ngoài.";
-  if (rainHour > 0) return "Có mưa nhỏ rải rác xung quanh khu vực.";
+  if (rainfall > 5) return "Phát hiện lượng mưa lớn. Hạn chế ra ngoài.";
+  if (rainfall > 1) return "Mưa rào nhẹ. Hãy mang theo ô khi ra ngoài.";
+  if (rainfall > 0.15) return "Có mưa nhỏ rải rác xung quanh khu vực.";
   if (humidity > 85)
     return "Độ ẩm rất cao và có sương mù. Tầm nhìn có thể bị hạn chế.";
   if (tempC > 35)
     return "Nhiệt độ cực kỳ cao. Uống nhiều nước và tránh ánh nắng gắt.";
   if (tempC > 30)
     return "Trời quang đãng với vài cụm mây. Thời tiết ấm áp trong cả ngày.";
-  if (tempC > 25) return "Thời tiết khá mát mẻ với nhiệt độ dễ chịu.";
+  if (tempC > 22) return "Trời xanh, có mây trắng và nắng nhẹ. Rất thích hợp để đi chơi.";
+  if (tempC > 18) return "Thời tiết khá mát mẻ với nhiệt độ dễ chịu.";
   return "Trời se lạnh. Nên chuẩn bị áo khoác nhẹ khi ra ngoài.";
 }
 

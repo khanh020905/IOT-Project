@@ -9,16 +9,17 @@ import {
 interface HeroWeatherProps {
   temperature: number;
   humidity: number;
-  rainHour: number;
+  rainRate: number;
 }
 
 export function HeroWeather({
   temperature,
   humidity,
-  rainHour,
+  rainRate,
 }: HeroWeatherProps) {
-  const condition = getWeatherCondition(temperature, humidity, rainHour);
-  const description = getWeatherDescription(temperature, humidity, rainHour);
+  // Use rainRate for live condition. If it's 0 (stopped raining), it will automatically fall through to sunshine logic.
+  const condition = getWeatherCondition(temperature, humidity, rainRate);
+  const description = getWeatherDescription(temperature, humidity, rainRate);
   const heatIndex = Math.round(calculateHeatIndex(temperature, humidity));
 
   return (

@@ -4,10 +4,11 @@ import type { HistoryPoint } from "../hooks/useWeatherData";
 
 interface RainCardProps {
   rainHour: number;
+  rainRate: number;
   history: HistoryPoint[];
 }
 
-export function RainCard({ rainHour, history }: RainCardProps) {
+export function RainCard({ rainHour, rainRate, history }: RainCardProps) {
   // We use the RainCard to act as the "Wind status" widget in the reference picture.
   // We'll rename the labels to abstract it as a generic environmental widget or rain severity.
 
@@ -21,8 +22,8 @@ export function RainCard({ rainHour, history }: RainCardProps) {
     history.length > 5
       ? history.slice(-20)
       : Array(20)
-          .fill(0)
-          .map((_, i) => ({ humidity: 30 + Math.sin(i) * 20 }));
+        .fill(0)
+        .map((_, i) => ({ humidity: 30 + Math.sin(i) * 20 }));
 
   const min = Math.min(...data.map((d) => d.humidity));
   const max = Math.max(...data.map((d) => d.humidity));
@@ -55,16 +56,30 @@ export function RainCard({ rainHour, history }: RainCardProps) {
       className="flex flex-col gap-6 p-6 w-full max-w-sm ml-auto"
     >
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2 text-white/70">
-          <Wind size={16} className="text-white/60" />
-          <span className="text-sm tracking-wide">Trạng thái Mưa</span>
+      <div className="flex flex-col gap-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2 text-white/70">
+            <Wind size={16} className="text-white/60" />
+            <span className="text-sm tracking-wide">Trực tiếp</span>
+          </div>
+          <div className="flex items-baseline gap-1">
+            <span className="text-3xl font-light text-red-500">
+              {rainRate.toFixed(1)}
+            </span>
+            <span className="text-red-500/60 text-xs">mm</span>
+          </div>
         </div>
-        <div className="flex items-baseline gap-1">
-          <span className="text-2xl font-light text-white">
-            {rainHour.toFixed(2)}
+
+        <div className="flex items-center justify-between pt-2 border-t border-white/5">
+          <span className="text-xs text-white/40 uppercase tracking-wider">
+            Lượng mưa trong giờ
           </span>
-          <span className="text-white/40 text-xs">mm/h</span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-lg font-light text-white/80">
+              {rainHour.toFixed(1)}
+            </span>
+            <span className="text-white/30 text-[10px]">mm</span>
+          </div>
         </div>
       </div>
 

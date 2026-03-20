@@ -6,6 +6,7 @@ export interface WeatherData {
   humidity: number;
   rainHour: number;
   rainDay: number;
+  rainRate: number;
   timestamp: number;
 }
 
@@ -26,12 +27,14 @@ async function getPin(pin: string): Promise<number> {
 
 export async function fetchWeatherData(): Promise<WeatherData | null> {
   try {
-    const [temperature, humidity, rainHour, rainDay] = await Promise.all([
-      getPin("V0"),
-      getPin("V1"),
-      getPin("V2"),
-      getPin("V4"),
-    ]);
+    const [temperature, humidity, rainHour, rainDay, rainRate] =
+      await Promise.all([
+        getPin("V0"),
+        getPin("V1"),
+        getPin("V2"),
+        getPin("V4"),
+        getPin("V5"),
+      ]);
 
     if (isNaN(temperature) && isNaN(humidity)) return null;
 
@@ -40,6 +43,7 @@ export async function fetchWeatherData(): Promise<WeatherData | null> {
       humidity: Math.round(humidity * 10) / 10,
       rainHour: Math.round(rainHour * 10) / 10,
       rainDay: Math.round(rainDay * 10) / 10,
+      rainRate: Math.round(rainRate * 10) / 10,
       timestamp: Date.now(),
     };
   } catch (error) {
