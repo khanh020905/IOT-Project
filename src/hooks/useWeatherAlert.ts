@@ -43,6 +43,8 @@ export function useWeatherAlert() {
     setLastChecked(new Date());
 
     if (data.isSuddenRain && !hasSentForecastRef.current) {
+      // Mark as sent FIRST to prevent retry loops
+      hasSentForecastRef.current = true;
       setStatus("alert-detected");
 
       const today = new Date().toLocaleDateString("vi-VN", {
@@ -66,12 +68,7 @@ export function useWeatherAlert() {
         hours: data.hourlyTemps,
       });
 
-      if (success) {
-        setStatus("alert-sent");
-        hasSentForecastRef.current = true;
-      } else {
-        setStatus("alert-failed");
-      }
+      setStatus(success ? "alert-sent" : "alert-failed");
     } else if (!data.isSuddenRain) {
       setStatus("no-alert");
     }
@@ -85,6 +82,8 @@ export function useWeatherAlert() {
       if (liveRainRate < LIVE_RAIN_THRESHOLD) return;
       if (hasSentLiveRef.current) return;
 
+      // Mark as sent FIRST to prevent retry loops
+      hasSentLiveRef.current = true;
       setStatus("alert-detected");
 
       const now = new Date();
@@ -109,12 +108,7 @@ export function useWeatherAlert() {
         hours: rainData?.hourlyTemps,
       });
 
-      if (success) {
-        setStatus("alert-sent");
-        hasSentLiveRef.current = true;
-      } else {
-        setStatus("alert-failed");
-      }
+      setStatus(success ? "alert-sent" : "alert-failed");
     },
     [rainData]
   );

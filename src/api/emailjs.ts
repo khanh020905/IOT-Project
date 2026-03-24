@@ -19,7 +19,7 @@ import emailjs from "@emailjs/browser";
 // ============================================================
 
 const EMAILJS_SERVICE_ID = "service_ajnj8zr";
-const EMAILJS_TEMPLATE_ID = "template_weather_alert"; // Replace with your template ID
+const EMAILJS_TEMPLATE_ID = "template_ygzvcco";
 const EMAILJS_PUBLIC_KEY = "WpOk9CDPBfXrPbZK5";
 
 let initialized = false;
