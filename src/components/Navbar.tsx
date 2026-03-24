@@ -29,7 +29,7 @@ export function Navbar({ isOnline }: NavbarProps) {
         <div className="relative">
           <Hexagon size={24} className="text-white fill-white/20" />
         </div>
-        <span className="text-lg font-medium tracking-wide text-white/90">
+        <span className="text-lg font-medium tracking-wide text-white/90 text-shadow-weather-sm">
           thời tiết<span className="text-white/50">.ngay bây giờ</span>
         </span>
       </div>
@@ -53,7 +53,7 @@ export function Navbar({ isOnline }: NavbarProps) {
       {/* Right: Date & Status */}
       <div className="flex items-center gap-6">
         <div className="flex flex-col items-end">
-          <span className="text-white/90 text-sm font-medium tracking-wide">
+          <span className="text-white/90 text-sm font-medium tracking-wide text-shadow-weather-sm">
             {dateStr} | {timeStr}
           </span>
           <div className="flex items-center gap-2 mt-1">

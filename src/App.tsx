@@ -5,11 +5,35 @@ import { HeroWeather } from "./components/HeroWeather";
 import { RainCard } from "./components/RainCard";
 import { HumidityCard } from "./components/HumidityCard";
 import { HistoryChart } from "./components/HistoryChart";
+import { ForecastStrip } from "./components/ForecastStrip";
+import { WeatherAlertBar } from "./components/WeatherAlertBar";
+import { LocationPickerModal } from "./components/LocationPickerModal";
+import { useForecast } from "./hooks/useForecast";
+import { useWeatherAlert } from "./hooks/useWeatherAlert";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
 function App() {
   const { data, history, isOnline, isLoading } = useWeatherData();
+  const { forecast, locationName, updateLocation, resetLocation } =
+    useForecast();
+  const [isMapOpen, setIsMapOpen] = useState(false);
+  const {
+    email: alertEmail,
+    status: alertStatus,
+    rainData,
+    lastChecked,
+    updateEmail,
+    checkLiveRain,
+  } = useWeatherAlert();
+
+  // Trigger alert when live IoT rain rate ≥ 10mm
+  useEffect(() => {
+    if (data?.rainRate != null) {
+      checkLiveRain(data.rainRate);
+    }
+  }, [data?.rainRate, checkLiveRain]);
 
   // Helper function to pick the appropriate video background based on weather
   const getBackgroundVideo = () => {
@@ -53,7 +77,9 @@ function App() {
       </AnimatePresence>
 
       {/* Subtle overlay gradient to ensure text readability */}
-      <div className="fixed inset-0 z-0 bg-gradient-to-b from-black/0 via-black/10 to-[#1a202c]/90 pointer-events-none" />
+      <div className="fixed inset-0 z-0 pointer-events-none" style={{
+        background: 'linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.15) 60%, rgba(26,32,44,0.9) 100%)'
+      }} />
 
       {/* Lightning Flash Effect (subtle, occasional) */}
       <motion.div
@@ -75,11 +101,11 @@ function App() {
         }}
       />
 
-      {/* Main content wrapper */}
-      <div className="relative z-10 flex flex-col min-h-screen">
+      {/* Hero Section — Full Viewport */}
+      <div className="relative z-10 flex flex-col h-screen">
         <Navbar isOnline={isOnline} />
 
-        <main className="flex-1 flex flex-col w-full h-full pb-0 relative">
+        <main className="flex-1 flex flex-col w-full overflow-hidden relative">
           <AnimatePresence mode="wait">
             {isLoading || !data ? (
               <motion.div
@@ -100,10 +126,10 @@ function App() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 1 }}
-                className="flex-1 flex flex-col pt-4 lg:pt-10 w-full"
+                className="flex-1 flex flex-col w-full overflow-hidden"
               >
                 {/* Top Section: Hero (Left) and Widgets (Right) */}
-                <div className="flex flex-col lg:flex-row justify-between w-full px-4 lg:px-8 xl:px-16">
+                <div className="flex-1 flex flex-col lg:flex-row justify-between w-full px-4 lg:px-8 xl:px-16 overflow-hidden">
                   {/* Left Hero */}
                   <div className="flex-1 lg:max-w-[60%] shrink-0">
                     <HeroWeather
@@ -114,8 +140,7 @@ function App() {
                   </div>
 
                   {/* Right Widgets */}
-                  <div className="flex flex-col gap-6 mt-12 lg:mt-0 lg:w-[380px] shrink-0 xl:mr-16 relative z-20">
-                    {/* Replaced 'Wind Status' with Rain Status sparkline */}
+                  <div className="flex flex-col gap-4 mt-8 lg:mt-0 lg:w-[380px] shrink-0 xl:mr-16 pt-4 overflow-y-auto scrollbar-hide">
                     <div className="w-full">
                       <RainCard
                         rainHour={data.rainHour}
@@ -123,8 +148,6 @@ function App() {
                         history={history}
                       />
                     </div>
-
-                    {/* Replaced 'Sunrise' with Humidity Dial */}
                     <div className="w-full">
                       <HumidityCard humidity={data.humidity} />
                     </div>
@@ -132,7 +155,7 @@ function App() {
                 </div>
 
                 {/* Bottom Timeline Strip (History) */}
-                <div className="w-full mt-auto mt-20 relative z-10">
+                <div className="w-full shrink-0 relative z-10">
                   <HistoryChart history={history} />
                 </div>
               </motion.div>
@@ -140,6 +163,43 @@ function App() {
           </AnimatePresence>
         </main>
       </div>
+
+      {/* Below-the-fold: Forecast + Alert — user scrolls down to see */}
+      {!isLoading && data && (
+        <div className="relative z-10">
+          {/* Hourly Forecast Strip */}
+          {forecast && forecast.hourly.length > 0 && (
+            <div className="w-full py-6">
+              <ForecastStrip
+                hours={forecast.hourly}
+                locationName={locationName}
+                onOpenLocationPicker={() => setIsMapOpen(true)}
+                onResetLocation={resetLocation}
+              />
+            </div>
+          )}
+
+          {/* Weather Alert Bar */}
+          <div className="w-full pb-8">
+            <WeatherAlertBar
+              email={alertEmail}
+              status={alertStatus}
+              rainData={rainData}
+              lastChecked={lastChecked}
+              onUpdateEmail={updateEmail}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Location Picker Modal */}
+      <LocationPickerModal
+        isOpen={isMapOpen}
+        onClose={() => setIsMapOpen(false)}
+        onSelectLocation={(lat, lon, name) => {
+          updateLocation(lat, lon, name);
+        }}
+      />
     </div>
   );
 }
