@@ -1,0 +1,175 @@
+{
+  "name": "🌦️ IoT Weather Alert - Groq AI + Telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "weather-alert",
+        "options": {}
+      },
+      "id": "node-1",
+      "name": "Webhook (Real-time)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 340],
+      "webhookId": "weather-alert-hook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================\n// 🌦️ KIỂM TRA NGƯỠNG CẢNH BÁO (Lấy Dữ Liệu)\n// ============================================\nconst data = $input.first().json.body;\n\nconst rainRate = parseFloat(data.rainRate) || 0;\nconst rainHour = parseFloat(data.rainHour) || 0;\nconst temperature = parseFloat(data.temperature) || 0;\nconst humidity = parseFloat(data.humidity) || 0;\n\nlet severity = 'Bình thường';\nlet hasAlert = false;\n\n// Ngưỡng mưa\nif (rainRate > 50) { severity = 'Rất Nguy Hiểm (Ngập lụt)'; hasAlert = true; }\nelse if (rainRate > 30) { severity = 'Nguy Hiểm (Khả năng ngập cao)'; hasAlert = true; }\nelse if (rainRate > 15) { severity = 'Cảnh Báo (Mưa to)'; hasAlert = true; }\nelse if (rainHour > 30) { severity = 'Cảnh Báo (Mưa kéo dài)'; hasAlert = true; }\n\n// Ngưỡng nhiệt\nif (temperature > 42) { severity = 'Rất Nguy Hiểm (Nguy cơ cháy rừng)'; hasAlert = true; }\nelse if (temperature > 40) { severity = 'Nguy Hiểm (Nắng nóng sốc nhiệt)'; hasAlert = true; }\nelse if (temperature > 38) { severity = 'Cảnh Báo (Nắng nóng gay gắt)'; hasAlert = true; }\n\n// Ngưỡng ẩm thấp + nóng\nif (humidity > 0 && humidity < 20 && temperature > 35) {\n  severity = 'Cảnh Báo (Nguy cơ hỏa hoạn do hanh khô)'; hasAlert = true;\n}\n\nreturn [{ json: { hasAlert, severity, rainRate, rainHour, temperature, humidity } }];"
+      },
+      "id": "node-2",
+      "name": "Lọc Cảnh Báo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 340]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "alert-check",
+              "leftValue": "={{ $json.hasAlert }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "node-3",
+      "name": "Có Cảnh Báo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [720, 340]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_GROQ_API_KEY_HERE"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Bạn là AI giám sát thời tiết khẩn cấp từ Trạm IoT. Viết 1 tin nhắn Telegram bằng tiếng Việt cảnh báo người dùng. Sử dụng emoji mạnh mẽ (🚨, ⚠️, 🔥, 🌊). Ngắn gọn, súc tích (dưới 100 chữ), KHÔNG chào hỏi, KHÔNG giải thích dài dòng. Cung cấp thông số thực tế và khuyên 1 câu an toàn. Nếu Mức độ là Rất Nguy Hiểm cần in đậm cảnh báo khẩn cấp.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Thông số cảm biến hiện tại - Mưa tức thời: {{ $json.rainRate }} mm/h, Mưa trong giờ: {{ $json.rainHour }} mm, Nhiệt độ: {{ $json.temperature }}°C, Độ ẩm: {{ $json.humidity }}%. MỨC ĐỘ CẢNH BÁO TỪ HỆ THỐNG: {{ $json.severity }}. Tạo thông báo Telegram!\"\n    }\n  ],\n  \"temperature\": 0.6\n}",
+        "options": {}
+      },
+      "id": "node-4",
+      "name": "Groq AI (Tạo Content)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 240]
+    },
+    {
+      "parameters": {
+        "chatId": "5956705006",
+        "text": "={{ $json.choices[0].message.content }}\n\n🤖 _Được tạo bởi Groq AI_",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "node-5",
+      "name": "Gửi Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1200, 240],
+      "credentials": {
+        "telegramApi": {
+          "id": "YOUR_CREDENTIAL_ID",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "node-6",
+      "name": "Bình Thường (Bỏ Qua)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [960, 440]
+    }
+  ],
+  "connections": {
+    "Webhook (Real-time)": {
+      "main": [
+        [
+          {
+            "node": "Lọc Cảnh Báo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lọc Cảnh Báo": {
+      "main": [
+        [
+          {
+            "node": "Có Cảnh Báo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Có Cảnh Báo?": {
+      "main": [
+        [
+          {
+            "node": "Groq AI (Tạo Content)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Bình Thường (Bỏ Qua)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq AI (Tạo Content)": {
+      "main": [
+        [
+          {
+            "node": "Gửi Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2026-03-26T15:45:00.000Z",
+  "versionId": "6"
+}

@@ -10,6 +10,7 @@ import { WeatherAlertBar } from "./components/WeatherAlertBar";
 import { LocationPickerModal } from "./components/LocationPickerModal";
 import { useForecast } from "./hooks/useForecast";
 import { useWeatherAlert } from "./hooks/useWeatherAlert";
+import { sendToN8N } from "./api/n8n";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
@@ -34,6 +35,18 @@ function App() {
       checkLiveRain(data.rainRate);
     }
   }, [data?.rainRate, checkLiveRain]);
+
+  // 🔔 Real-time n8n webhook — sends sensor data instantly when thresholds crossed
+  useEffect(() => {
+    if (data) {
+      sendToN8N({
+        rainRate: data.rainRate,
+        rainHour: data.rainHour,
+        temperature: data.temperature,
+        humidity: data.humidity,
+      });
+    }
+  }, [data?.rainRate, data?.temperature]);
 
   // Helper function to pick the appropriate video background based on weather
   const getBackgroundVideo = () => {
