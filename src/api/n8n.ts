@@ -4,14 +4,21 @@
 // Sends sensor data to n8n webhook instantly
 // when thresholds are crossed (rain > 15mm, temp > 38°C)
 
-const N8N_WEBHOOK_URL =
+const N8N_BASE =
   window.location.hostname === "localhost"
-    ? "http://localhost:5678/webhook/weather-alert"
-    : "https://n8n-h24n.onrender.com/webhook/weather-alert";
+    ? "http://localhost:5678"
+    : "https://n8n-h24n.onrender.com";
+
+const N8N_WEBHOOK_URL = `${N8N_BASE}/webhook/weather-alert`;
+const N8N_EMERGENCY_URL = `${N8N_BASE}/webhook/emergency-call`;
 
 // Cooldown to prevent spam (5 minutes between alerts)
 let lastAlertTime = 0;
 const ALERT_COOLDOWN = 5 * 60 * 1000; // 5 minutes
+
+// Separate cooldown for emergency calls (30 min — don't spam phone calls)
+let lastCallTime = 0;
+const CALL_COOLDOWN = 30 * 60 * 1000; // 30 minutes
 
 interface SensorPayload {
   rainRate: number;
@@ -19,6 +26,7 @@ interface SensorPayload {
   temperature: number;
   humidity: number;
   location?: string;
+  phoneNumber?: string;
 }
 
 /**
@@ -43,27 +51,43 @@ export async function sendToN8N(data: SensorPayload): Promise<boolean> {
     return false;
   }
 
+  const payload = {
+    rainRate: data.rainRate,
+    rainHour: data.rainHour,
+    temperature: data.temperature,
+    humidity: data.humidity,
+    location: data.location || "Trạm IoT — TP.HCM",
+  };
+
   try {
+    // 1. Send Telegram alert (always for any warning)
     const response = await fetch(N8N_WEBHOOK_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        rainRate: data.rainRate,
-        rainHour: data.rainHour,
-        temperature: data.temperature,
-        humidity: data.humidity,
-        location: data.location || "Trạm IoT — TP.HCM",
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (response.ok) {
       lastAlertTime = now;
-      console.log("[n8n] ✅ Alert sent to n8n webhook");
-      return true;
-    } else {
-      console.error("[n8n] ❌ Webhook responded with:", response.status);
-      return false;
+      console.log("[n8n] ✅ Telegram alert sent");
     }
+
+    // 2. Trigger emergency VOICE CALL for critical alerts only
+    const isCritical =
+      data.rainRate > 22 || data.temperature > 40 || (data.humidity < 20 && data.temperature > 35);
+    const phone = data.phoneNumber || localStorage.getItem("emergency_phone") || "";
+
+    if (isCritical && phone && now - lastCallTime >= CALL_COOLDOWN) {
+      await fetch(N8N_EMERGENCY_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...payload, phoneNumber: phone }),
+      });
+      lastCallTime = now;
+      console.log("[n8n] 📞 Emergency voice call triggered to", phone);
+    }
+
+    return true;
   } catch (error) {
     console.error("[n8n] ❌ Failed to reach n8n webhook:", error);
     return false;

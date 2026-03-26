@@ -1,0 +1,155 @@
+{
+  "name": "📞 IoT Emergency Voice Call - Twilio",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "emergency-call",
+        "options": {}
+      },
+      "id": "call-1",
+      "name": "Webhook (Emergency)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 340],
+      "webhookId": "emergency-call-hook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json.body;\n\nconst rainRate = parseFloat(data.rainRate) || 0;\nconst rainHour = parseFloat(data.rainHour) || 0;\nconst temperature = parseFloat(data.temperature) || 0;\nconst humidity = parseFloat(data.humidity) || 0;\nconst phoneNumber = data.phoneNumber || '';\n\nlet isCritical = false;\nlet reason = '';\n\nif (rainRate > 30) { isCritical = true; reason = 'Mưa cực lớn ' + rainRate + ' mi li mét trên giờ. Nguy cơ ngập lụt nghiêm trọng!'; }\nelse if (rainRate > 22) { isCritical = true; reason = 'Mưa rất lớn ' + rainRate + ' mi li mét trên giờ. Khả năng ngập cao!'; }\n\nif (temperature > 42) { isCritical = true; reason = 'Nhiệt độ cực kỳ nguy hiểm ' + temperature + ' độ C. Nguy cơ cháy rừng!'; }\nelse if (temperature > 40) { isCritical = true; reason = 'Nắng nóng cực độ ' + temperature + ' độ C. Nguy cơ sốc nhiệt!'; }\n\nif (humidity > 0 && humidity < 20 && temperature > 35) {\n  isCritical = true;\n  reason = 'Độ ẩm cực thấp ' + humidity + ' phần trăm kết hợp nhiệt độ ' + temperature + ' độ. Nguy cơ hỏa hoạn!';\n}\n\nconst voiceMessage = 'Cảnh báo khẩn cấp từ Trạm IoT! ' + reason + ' Vui lòng kiểm tra ngay và di chuyển đến nơi an toàn! Lặp lại, ' + reason;\n\nconst twiml = '<Response><Pause length=\"1\"/><Say language=\"vi-VN\" voice=\"Google.vi-VN-Standard-A\">' + voiceMessage + '</Say><Pause length=\"2\"/><Say language=\"vi-VN\" voice=\"Google.vi-VN-Standard-A\">' + voiceMessage + '</Say></Response>';\n\nreturn [{ json: { isCritical, reason, voiceMessage, twiml, phoneNumber, rainRate, rainHour, temperature, humidity } }];"
+      },
+      "id": "call-2",
+      "name": "Phân Tích Mức Nguy Hiểm",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 340]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "critical-check",
+              "leftValue": "={{ $json.isCritical }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "call-3",
+      "name": "Có Nghiêm Trọng?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [720, 340]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twilio.com/2010-04-01/Accounts/YOUR_TWILIO_ACCOUNT_SID/Calls.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Basic ' + Buffer.from('YOUR_TWILIO_ACCOUNT_SID:YOUR_TWILIO_AUTH_TOKEN').toString('base64') }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{ $json.phoneNumber }}"
+            },
+            {
+              "name": "From",
+              "value": "+14784297167"
+            },
+            {
+              "name": "Twiml",
+              "value": "={{ $json.twiml }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "call-4",
+      "name": "📞 Gọi Điện Khẩn Cấp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 240]
+    },
+    {
+      "parameters": {},
+      "id": "call-5",
+      "name": "Không Nghiêm Trọng (Bỏ Qua)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [960, 440]
+    }
+  ],
+  "connections": {
+    "Webhook (Emergency)": {
+      "main": [
+        [
+          {
+            "node": "Phân Tích Mức Nguy Hiểm",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Phân Tích Mức Nguy Hiểm": {
+      "main": [
+        [
+          {
+            "node": "Có Nghiêm Trọng?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Có Nghiêm Trọng?": {
+      "main": [
+        [
+          {
+            "node": "📞 Gọi Điện Khẩn Cấp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Không Nghiêm Trọng (Bỏ Qua)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2026-03-27T01:37:00.000Z",
+  "versionId": "1"
+}
