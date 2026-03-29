@@ -117,15 +117,15 @@ export function HistoryChart({ history }: HistoryChartProps) {
       </div>
 
       {/* Datapoints & Labels */}
-      <div className="flex justify-between items-end w-full px-4 lg:px-16 relative z-10">
+      <div className="flex justify-between items-end w-full px-2 sm:px-4 lg:px-16 relative z-10">
         {points.map((p, i) => (
-          <div key={i} className="flex flex-col items-center gap-3 relative">
-            <span className="text-white/60 text-sm font-medium">
+          <div key={i} className="flex flex-col items-center gap-1.5 md:gap-3 relative">
+            <span className="text-white/60 text-[9px] sm:text-[10px] md:text-sm font-medium whitespace-nowrap">
               {labels[i]}
             </span>
 
             {/* The Temperature Node */}
-            <span className="text-2xl font-light text-white">
+            <span className="text-lg md:text-2xl font-light text-white">
               {typeof p.temperature === "number"
                 ? Math.round(p.temperature)
                 : "--"}
@@ -133,15 +133,15 @@ export function HistoryChart({ history }: HistoryChartProps) {
             </span>
 
             {/* Glowing Dot on path representing current active block */}
-            <div className="relative h-6 flex items-center justify-center my-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-white/80 z-10" />
+            <div className="relative h-4 md:h-6 flex items-center justify-center my-1 md:my-2">
+              <div className="w-1.5 h-1.5 md:w-2.5 md:h-2.5 rounded-full bg-white/80 z-10" />
               {i === points.length - 1 && (
-                <div className="absolute inset-0 m-auto w-6 h-6 bg-white/30 rounded-full animate-ping z-0" />
+                <div className="absolute inset-0 m-auto w-4 h-4 md:w-6 md:h-6 bg-white/30 rounded-full animate-ping z-0" />
               )}
             </div>
 
             {/* Weather Icon (simulated history state) */}
-            <div className="mt-2 text-white/80">{getIcon(i)}</div>
+            <div className="mt-1 md:mt-2 text-white/80 scale-[0.65] md:scale-100 origin-top">{getIcon(i)}</div>
           </div>
         ))}
       </div>

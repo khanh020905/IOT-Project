@@ -80,21 +80,21 @@ export function ForecastStrip({
       className="w-full"
     >
       {/* Section Header */}
-      <div className="flex items-center justify-between px-6 lg:px-16 mb-3">
-        <div className="flex items-center gap-3">
-          <span className="text-white/50 text-xs uppercase tracking-widest font-medium">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0 px-6 lg:px-16 mb-3">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3 w-full md:w-auto">
+          <span className="text-white/50 text-[10px] md:text-xs uppercase tracking-widest font-medium shrink-0">
             Dự báo theo giờ
           </span>
-          <div className="w-16 h-px bg-gradient-to-r from-white/20 to-transparent" />
+          <div className="w-8 md:w-16 h-px bg-gradient-to-r from-white/20 to-transparent shrink-0" />
           {locationName && (
-            <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/10">
-              <MapPin size={10} className="text-blue-400" />
-              <span className="text-white/70 text-[10px] font-medium truncate max-w-[120px]">
+            <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm px-2 py-0.5 md:px-2.5 md:py-1 rounded-full border border-white/10 max-w-full">
+              <MapPin size={10} className="text-blue-400 shrink-0" />
+              <span className="text-white/70 text-[9px] md:text-[10px] font-medium truncate max-w-[100px] md:max-w-[120px]">
                 {locationName}
               </span>
               <button
                 onClick={onResetLocation}
-                className="ml-0.5 text-white/30 hover:text-white/60 transition-colors"
+                className="ml-0.5 text-white/30 hover:text-white/60 transition-colors shrink-0"
                 title="Về mặc định"
               >
                 <X size={10} />
@@ -102,21 +102,21 @@ export function ForecastStrip({
             </div>
           )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between w-full md:w-auto gap-3">
           {/* Location Picker Button */}
           <button
             onClick={onOpenLocationPicker}
-            className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10 hover:border-white/20 transition-all group"
+            className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 backdrop-blur-sm px-2.5 py-1 md:px-3 md:py-1.5 rounded-full border border-white/10 hover:border-white/20 transition-all group shrink-0"
           >
             <MapPin
               size={12}
               className="text-white/40 group-hover:text-blue-400 transition-colors"
             />
-            <span className="text-white/40 group-hover:text-white/70 text-[10px] uppercase tracking-wider font-medium transition-colors">
+            <span className="text-white/40 group-hover:text-white/70 text-[9px] md:text-[10px] uppercase tracking-wider font-medium transition-colors">
               Chọn vị trí
             </span>
           </button>
-          <div className="flex items-center gap-1 text-white/30 text-xs">
+          <div className="flex items-center gap-1 text-white/30 text-[10px] md:text-xs shrink-0">
             <span>Open-Meteo</span>
             <ChevronRight size={12} />
           </div>
@@ -137,8 +137,8 @@ export function ForecastStrip({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 1.1 + i * 0.05 }}
                 className={`
-                  flex flex-col items-center gap-2 px-4 py-3 rounded-2xl min-w-[72px]
-                  transition-all duration-300 cursor-default
+                  flex flex-col items-center gap-1.5 md:gap-2 px-3 py-2 md:px-4 md:py-3 rounded-xl md:rounded-2xl min-w-[64px] md:min-w-[72px]
+                  transition-all duration-300 cursor-default shrink-0
                   ${
                     isFirst
                       ? "bg-white/15 backdrop-blur-xl border border-white/20 shadow-lg shadow-white/5"
@@ -154,14 +154,16 @@ export function ForecastStrip({
                 </span>
 
                 {/* Icon */}
-                <IconComponent
-                  size={22}
-                  className={`${getIconColor(h.weatherIcon)} ${isFirst ? "drop-shadow-lg" : ""}`}
-                />
+                <div className="scale-75 md:scale-100 flex items-center justify-center">
+                  <IconComponent
+                    size={22}
+                    className={`${getIconColor(h.weatherIcon)} ${isFirst ? "drop-shadow-lg" : ""}`}
+                  />
+                </div>
 
                 {/* Temperature */}
                 <span
-                  className={`text-sm font-light ${isFirst ? "text-white" : "text-white/80"}`}
+                  className={`text-xs md:text-sm font-light ${isFirst ? "text-white" : "text-white/80"}`}
                 >
                   {h.temperature}°
                 </span>

@@ -142,9 +142,9 @@ function App() {
                 className="flex-1 flex flex-col w-full overflow-hidden"
               >
                 {/* Top Section: Hero (Left) and Widgets (Right) */}
-                <div className="flex-1 flex flex-col lg:flex-row justify-between w-full px-4 lg:px-8 xl:px-16 overflow-hidden">
+                <div className="flex-1 flex flex-col lg:flex-row justify-between w-full px-4 lg:px-8 xl:px-16 overflow-y-auto lg:overflow-hidden pb-8 lg:pb-0 scrollbar-hide">
                   {/* Left Hero */}
-                  <div className="flex-1 lg:max-w-[60%] shrink-0">
+                  <div className="lg:flex-1 lg:max-w-[60%] shrink-0">
                     <HeroWeather
                       temperature={data.temperature}
                       humidity={data.humidity}
@@ -153,7 +153,7 @@ function App() {
                   </div>
 
                   {/* Right Widgets */}
-                  <div className="flex flex-col gap-4 mt-8 lg:mt-0 lg:w-[380px] shrink-0 xl:mr-16 pt-4 overflow-y-auto scrollbar-hide">
+                  <div className="flex flex-col gap-4 mt-8 lg:mt-0 lg:w-[380px] shrink-0 xl:mr-16 pt-4 lg:overflow-y-auto lg:scrollbar-hide">
                     <div className="w-full">
                       <RainCard
                         rainHour={data.rainHour}

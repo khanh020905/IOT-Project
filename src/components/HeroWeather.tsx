@@ -30,7 +30,7 @@ export function HeroWeather({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-          className="text-6xl lg:text-7xl xl:text-8xl font-light tracking-tight text-white leading-none whitespace-nowrap text-shadow-weather"
+          className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-light tracking-tight text-white leading-tight md:whitespace-nowrap whitespace-normal text-shadow-weather"
         >
           {condition}
         </motion.h1>
