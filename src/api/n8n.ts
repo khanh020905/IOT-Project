@@ -4,13 +4,11 @@
 // Sends sensor data to n8n webhook instantly
 // when thresholds are crossed (rain > 15mm, temp > 38°C)
 
-const N8N_BASE =
-  window.location.hostname === "localhost"
-    ? "http://localhost:5678"
-    : "https://n8n-h24n.onrender.com";
-
-const N8N_WEBHOOK_URL = `${N8N_BASE}/webhook/weather-alert`;
-const N8N_EMERGENCY_URL = `${N8N_BASE}/webhook/emergency-call`;
+// Both endpoints so we can test on live Production and Localhost simultaneously
+const ENDPOINTS = [
+  "https://n8n-h24n.onrender.com",
+  "http://localhost:5678"
+];
 
 // Cooldown to prevent spam (5 minutes between alerts)
 let lastAlertTime = 0;
@@ -61,16 +59,20 @@ export async function sendToN8N(data: SensorPayload): Promise<boolean> {
 
   try {
     // 1. Send Telegram alert (always for any warning)
-    const response = await fetch(N8N_WEBHOOK_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    if (response.ok) {
-      lastAlertTime = now;
-      console.log("[n8n] ✅ Telegram alert sent");
-    }
+    // Send to both localhost and production concurrently
+    const alertPromises = ENDPOINTS.map((base) =>
+      fetch(`${base}/webhook/weather-alert`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }).catch((e) => console.warn(`[n8n] Warning: Failed to reach ${base}`, e))
+    );
+    
+    await Promise.all(alertPromises);
+    
+    // We assume if it didn't crash, at least one hit successfully
+    lastAlertTime = now;
+    console.log("[n8n] ✅ Telegram alert sent to endpoints");
 
     // 2. Trigger emergency VOICE CALL for critical alerts only
     const isCritical =
@@ -78,11 +80,15 @@ export async function sendToN8N(data: SensorPayload): Promise<boolean> {
     const phone = data.phoneNumber || localStorage.getItem("emergency_phone") || "";
 
     if (isCritical && phone && now - lastCallTime >= CALL_COOLDOWN) {
-      await fetch(N8N_EMERGENCY_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...payload, phoneNumber: phone }),
-      });
+      const callPromises = ENDPOINTS.map((base) =>
+        fetch(`${base}/webhook/emergency-call`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...payload, phoneNumber: phone }),
+        }).catch((e) => console.warn(`[n8n] Warning: Failed to reach ${base}`, e))
+      );
+      
+      await Promise.all(callPromises);
       lastCallTime = now;
       console.log("[n8n] 📞 Emergency voice call triggered to", phone);
     }
